@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<body class="bg-gray-100">
+    <div class="bg-white rounded-lg max-w-3xl mx-auto mt-8 shadow">
+        <div class="p-6">
+            <!-- Django Messages -->
+            {% if messages %}
+            <div class="mb-4 space-y-2">
+                {% for message in messages %}
+                <div class="p-3 rounded-lg 
+                            {% if message.tags == 'success' %}bg-green-50 border border-green-200 text-green-700
+                            {% elif message.tags == 'error' %}bg-red-50 border border-red-200 text-red-700
+                            {% else %}bg-blue-50 text-blue-700{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <!-- Carro -->
+                    <div class="p-4 border rounded-lg">
+                        <div class="flex items-center gap-2 mb-3">
+                            <svg class="text-blue-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                viewBox="0 0 24 24">
+                                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M17 11h2a2 2 0 0 1 2 2v2a1 1 0 0 1-1 1h-1.5M17 11h-6.5m6.5 0l-2.417-4.029A2 2 0 0 0 12.868 6H10.5m0 0v5m0-5H7.64a2 2 0 0 0-1.962 1.608L5 11m5.5 0H5m.5 5H4a1 1 0 0 1-1-1v-2a2 2 0 0 1 2-2v0m.5 5a2 2 0 1 0 4 0m-4 0a2 2 0 1 1 4 0m0 0h5m0 0a2 2 0 1 0 4 0m-4 0a2 2 0 1 1 4 0"/>
+                            </svg>
+                            <h3 class="font-semibold text-blue-600">Tarifa para Automóviles</h3>
+                        </div>
+                        <div>
+                            <label for="tarifa_carro" class="block text-sm font-medium text-gray-700 mb-1">
+                                Precio por Hora
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-gray-500">$</span>
+                                <input type="number" name="tarifa_carro" id="tarifa_carro"
+                                    value="{{ tarifa_carro }}"
+                                    step="0.01"
+                                    placeholder="5000"
+                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Moto -->
+                    <div class="p-4 border rounded-lg">
+                        <div class="flex items-center gap-2 mb-3">
+                            <svg class="text-green-600" xmlns="http://www.w3.org/2000/svg" width="22" height="20"
+                                viewBox="0 0 640 512">
+                                <path fill="currentColor"
+                                    d="M280 32c-13.3 0-24 10.7-24 24s10.7 24 24 24h57.7l16.4 30.3L256 192l-45.3-45.3c-12-12-28.3-18.7-45.3-18.7H64c-17.7 0-32 14.3-32 32v32h96c88.4 0 160 71.6 160 160c0 11-1.1 21.7-3.2 32h70.4c-2.1-10.3-3.2-21-3.2-32c0-52.2 25-98.6 63.7-127.8l15.4 28.6C402.4 276.3 384 312 384 352c0 70.7 57.3 128 128 128s128-57.3 128-128s-57.3-128-128-128c-13.5 0-26.5 2.1-38.7 6l-55.1-102H480c17.7 0 32-14.3 32-32V64c0-17.7-14.3-32-32-32h-20.4c-7.5 0-14.7 2.6-20.5 7.4l-47.4 39.5l-14-26c-7-12.9-20.5-21-35.2-21zm182.7 279.2l28.2 52.2c6.3 11.7 20.9 16 32.5 9.7s16-20.9 9.7-32.5l-28.2-52.2c2.3-.3 4.7-.4 7.1-.4c35.3 0 64 28.7 64 64s-28.7 64-64 64s-64-28.7-64-64c0-15.5 5.5-29.7 14.7-40.8M187.3 376c-9.5 23.5-32.5 40-59.3 40c-35.3 0-64-28.7-64-64s28.7-64 64-64c26.9 0 49.9 16.5 59.3 40h66.4c-11.2-59.2-63.2-104-125.7-104C57.3 224 0 281.3 0 352s57.3 128 128 128c62.5 0 114.5-44.8 125.8-104h-66.4zm-59.3 8a32 32 0 1 0 0-64a32 32 0 1 0 0 64"/>
+                            </svg>
+                            <h3 class="font-semibold text-green-600">Tarifa para Motocicletas</h3>
+                        </div>
+                        <div>
+                            <label for="tarifa_moto" class="block text-sm font-medium text-gray-700 mb-1">
+                                Precio por Hora
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-gray-500">$</span>
+                                <input type="number" name="tarifa_moto" id="tarifa_moto"
+                                    value="{{ tarifa_moto }}"
+                                    step="0.01"
+                                    placeholder="2000"
+                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                                    required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-4 border-t">
+                    <button type="submit"
+                        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center gap-2">
+                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clip-rule="evenodd"></path>
+                        </svg>
+                        Actualizar Tarifas
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+{% endblock %}

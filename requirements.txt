@@ -1,0 +1,9 @@
+asgiref==3.8.1
+colorama==0.4.6
+Django==5.2.1
+pillow==11.2.1
+python-barcode==0.15.1
+pywin32==310
+qrcode==8.2
+sqlparse==0.5.3
+tzdata==2025.2
