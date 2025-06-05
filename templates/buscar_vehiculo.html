@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load custom_filters %}
+
+{% block title %}Buscar Vehículo{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 p-6">
+    <div class="max-w-4xl mx-auto space-y-6">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h1 class="text-2xl font-bold text-gray-900">Buscar Vehículo</h1>
+                <a href="{% url 'dashboard' %}" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
+                    ← Volver al Dashboard
+                </a>
+            </div>
+            
+            <!-- Formulario de búsqueda -->
+            <form method="GET" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Placa del Vehículo o Código de Barras
+                    </label>
+                    <div class="flex gap-2">
+                        <input
+                            type="text"
+                            name="placa"
+                            value="{{ termino_busqueda }}"
+                            placeholder="Ej: ABC123 o código de barras"
+                            class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required
+                        >
+                        <button
+                            type="submit"
+                            class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                            Buscar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+
+        <!-- Resultados de búsqueda -->
+        {% if busqueda_realizada %}
+            {% if vehiculo_info %}
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <!-- Header del resultado -->
+                    <div class="bg-green-50 border-b px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-green-100 rounded-full">
+                                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-bold text-green-800">Vehículo Encontrado</h2>
+                                <p class="text-green-600">El vehículo está actualmente en el parqueadero</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información del vehículo -->
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Datos básicos -->
+                            <div class="space-y-4">
+                                <h3 class="font-semibold text-gray-900 border-b pb-2">Información del Vehículo</h3>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Placa:</span>
+                                        <span class="font-semibold text-lg">{{ vehiculo_info.placa }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Tipo:</span>
+                                        <span class="font-medium capitalize {% if vehiculo_info.tipo == 'carro' %}text-blue-600{% else %}text-purple-600{% endif %}">
+                                            {{ vehiculo_info.tipo }}
+                                        </span>
+                                    </div>
+                                    {% if vehiculo_info.nombre_propietario %}
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Propietario:</span>
+                                        <span class="font-medium">{{ vehiculo_info.nombre_propietario }}</span>
+                                    </div>
+                                    {% endif %}
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Código:</span>
+                                        <span class="font-mono text-sm">{{ registro_activo.codigo_barras }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tiempo de estadía -->
+                            <div class="space-y-4">
+                                <h3 class="font-semibold text-gray-900 border-b pb-2">Tiempo de Estadía</h3>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Entrada:</span>
+                                        <span class="font-medium">{{ registro_activo.fecha_entrada|date:"d/m/Y H:i" }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Tiempo transcurrido:</span>
+                                        <span class="font-medium text-blue-600">
+                                            {% if tiempo_estadia %}
+                                                {% if tiempo_estadia.days > 0 %}
+                                                    {{ tiempo_estadia.days }} día{{ tiempo_estadia.days|pluralize }},
+                                                {% endif %}
+                                                {{ tiempo_estadia.seconds|floatformat:0|div:3600|floatformat:0 }} h 
+                                                {{ tiempo_estadia.seconds|floatformat:0|mod:3600|div:60|floatformat:0 }} min
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Horas a cobrar:</span>
+                                        <span class="font-bold text-lg text-orange-600">{{ horas_cobradas }} hora{{ horas_cobradas|pluralize }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Valor a pagar -->
+                            <div class="space-y-4">
+                                <h3 class="font-semibold text-gray-900 border-b pb-2">Facturación</h3>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Tarifa por hora:</span>
+                                        <span class="font-medium">${{ vehiculo_info.tipo|yesno:"tarifa_carro,tarifa_moto"|floatformat:0|intcomma }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Horas:</span>
+                                        <span class="font-medium">{{ horas_cobradas }}</span>
+                                    </div>
+                                    <div class="flex justify-between border-t pt-2">
+                                        <span class="text-gray-900 font-semibold">Total a pagar:</span>
+                                        <span class="font-bold text-2xl text-green-600">${{ valor_a_pagar|floatformat:2|intcomma }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Código de barras -->
+                        {% if registro_activo.imagen_codigo_barras %}
+                        <div class="mt-6 pt-6 border-t">
+                            <h3 class="font-semibold text-gray-900 mb-3">Código de Barras</h3>
+                            <div class="flex justify-center">
+                                <img src="{{ registro_activo.imagen_codigo_barras.url }}" 
+                                     alt="Código de barras" 
+                                     class="border rounded-lg shadow-sm bg-white p-4 max-w-sm">
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Botones de acción -->
+                        <div class="mt-6 pt-6 border-t flex gap-4 justify-center">
+                            <form method="POST" action="{% url 'procesar_salida_vehiculo' registro_activo.id %}" 
+                                  onsubmit="return confirm('¿Confirma el registro de salida de este vehículo?')">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                        class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 font-semibold">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v-5a2 2 0 00-2-2H4"/>
+                                    </svg>
+                                    Registrar Salida
+                                </button>
+                            </form>
+                            
+                            <a href="{% url 'reimprimir_ticket' registro_activo.id %}" 
+                               class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                </svg>
+                                Reimprimir Ticket
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endif %}
+
+        <!-- Estadísticas rápidas -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white rounded-lg shadow p-4 text-center">
+                <div class="text-2xl font-bold text-blue-600">{{ total_vehiculos_activos }}</div>
+                <div class="text-sm text-gray-600">Vehículos en el parqueadero</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 text-center">
+                <div class="text-2xl font-bold text-green-600">${{ ingresos_hoy|intcomma }}</div>
+                <div class="text-sm text-gray-600">Ingresos hoy</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 text-center">
+                <a href="{% url 'dashboard' %}" class="block p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                    <div class="text-lg font-semibold text-gray-700">Dashboard</div>
+                    <div class="text-sm text-gray-500">Volver al inicio</div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .no-print { display: none !important; }
+    body { background: white !important; }
+}
+</style>
+{% endblock %}

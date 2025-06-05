@@ -36,17 +36,6 @@
                 <div class="text-2xl font-bold text-gray-900">${{ ingresos_hoy|intcomma }}</div>
             </div>
 
-            <!-- Ingresos Semana -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-sm font-medium text-gray-600">Ingresos Semana</h3>
-                    <svg class="h-4 w-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
-                    </svg>
-                </div>
-                <div class="text-2xl font-bold text-gray-900">${{ ingresos_semana|intcomma }}</div>
-            </div>
-
             <!-- Ingresos Mensual -->
             <div class="bg-white rounded-lg shadow p-6">
                 <div class="flex items-center justify-between mb-2">
@@ -57,37 +46,56 @@
                 </div>
                 <div class="text-2xl font-bold text-gray-900">${{ ingresos_mes|intcomma }}</div>
             </div>
+
+            <!-- Vehículos Activos -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray-600">Vehículos Activos</h3>
+                    <svg class="h-4 w-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <div class="text-2xl font-bold text-gray-900">{{ vehiculos_activos }}</div>
+            </div>
         </div>
 
         <!-- Main Actions -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Verificación de Vehículo -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    Verificación de Vehículo
-                </h2>
-                <form method="GET" action="{% url 'buscar_vehiculo' %}" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Placa del Vehículo</label>
-                        <input
-                            type="text"
-                            name="placa"
-                            placeholder="ABC123"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                        >
-                    </div>
-                    <button
-                        type="submit"
-                        class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                    >
-                        Buscar Vehículo
-                    </button>
-                </form>
-            </div>
+<div class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Verificación de Vehículo
+    </h2>
+    <form method="GET" action="{% url 'buscar_vehiculo' %}" class="space-y-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+                Placa del Vehículo o Código de Barras
+            </label>
+            <input
+                type="text"
+                name="placa"
+                placeholder="Ingrese placa (ABC123) o código de barras"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+            >
+            <p class="text-xs text-gray-500 mt-1">
+                Puede buscar por placa del vehículo o por el código de barras del ticket
+            </p>
+        </div>
+        <button
+            type="submit"
+            class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center gap-2"
+        >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            Buscar Vehículo
+        </button>
+    </form>
+</div>
 
             <!-- Registro de Vehículo -->
             <div class="bg-white rounded-lg shadow p-6">
@@ -180,20 +188,20 @@
         <!-- Sección de abonados -->
         <div class="bg-white rounded-lg shadow p-6">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-semibold">Gestión de Abonados</h2>
+                <h2 class="text-lg font-semibold">Gestión de Membresías</h2>
                 <a href="{% url 'gestion_abonados' %}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
-                    Ver todos los abonados
+                    Ver todas las membresías
                 </a>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div class="text-center p-4 bg-blue-50 rounded-lg">
                     <div class="text-2xl font-bold text-blue-600">{{ abonados_carros }}</div>
-                    <div class="text-sm text-gray-600">Carros Abonados</div>
+                    <div class="text-sm text-gray-600">Carros</div>
                 </div>
                 <div class="text-center p-4 bg-purple-50 rounded-lg">
                     <div class="text-2xl font-bold text-purple-600">{{ abonados_motos }}</div>
-                    <div class="text-sm text-gray-600">Motos Abonadas</div>
+                    <div class="text-sm text-gray-600">Motos</div>
                 </div>
                 <div class="text-center p-4 bg-green-50 rounded-lg">
                     <div class="text-2xl font-bold text-green-600">${{ ingresos_mensuales|intcomma }}</div>
@@ -204,7 +212,7 @@
             <!-- Formulario rápido para nuevo abonado -->
             <form method="POST" action="{% url 'agregar_abonado' %}" class="space-y-4">
                 {% csrf_token %}
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Placa</label>
                         <input
@@ -234,6 +242,17 @@
                             type="text"
                             name="nombre"
                             placeholder="Nombre completo"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required
+                        >
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                        <input
+                            type="tel"
+                            name="telefono"
+                            placeholder="3001234567"
+                            pattern="[0-9]{10}"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             required
                         >

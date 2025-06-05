@@ -341,7 +341,7 @@ class SuscripcionMensual(models.Model):
     usuario_registro = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True)
     
     def __str__(self):
-        return f"Suscripción {self.nombre} - {self.vehiculo.placa}"
+        return f"Suscripción {self.nombre_cliente} - {self.vehiculo.placa}"
 
     def esta_activa(self):
         ahora = timezone.now()
@@ -365,3 +365,40 @@ class Tarifa(models.Model):
     
     def __str__(self):
         return f"Tarifa {self.tipo_vehiculo}: ${self.valor_por_hora}/hora"
+
+class EstadisticaDiaria(models.Model):
+    fecha = models.DateField(auto_now_add=True)
+    total_ingresos = models.FloatField(default=0)
+    total_carros = models.IntegerField(default=0)
+    total_motos = models.IntegerField(default=0)
+    total_membresias = models.IntegerField(default=0)
+    ingresos_membresias = models.FloatField(default=0)
+    
+    class Meta:
+        verbose_name = "Estadística Diaria"
+        verbose_name_plural = "Estadísticas Diarias"
+    
+    def __str__(self):
+        return f"Estadísticas del {self.fecha}"
+    
+    @classmethod
+    def obtener_estadistica_dia(cls):
+        """Obtiene o crea la estadística del día actual"""
+        hoy = timezone.now().date()
+        estadistica, created = cls.objects.get_or_create(fecha=hoy)
+        return estadistica
+    
+    def actualizar_estadisticas(self, tipo_vehiculo, monto=0, es_membresia=False):
+        """Actualiza las estadísticas con un nuevo registro"""
+        if tipo_vehiculo == 'carro':
+            self.total_carros += 1
+        elif tipo_vehiculo == 'moto':
+            self.total_motos += 1
+            
+        if es_membresia:
+            self.total_membresias += 1
+            self.ingresos_membresias += monto
+        else:
+            self.total_ingresos += monto
+            
+        self.save()

@@ -10,7 +10,7 @@
 </head>
 <body class="bg-gray-100">
     <!-- Header -->
-    <header class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white shadow-lg">
+    {% comment %} <header class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-4">
                 <div class="flex items-center space-x-4">
@@ -35,8 +35,61 @@
                 </div>
             </div>
         </div>
-    </header>
+    </header> {% endcomment %}
+<header class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4">
+            <!-- Logo e ícono -->
+            <div class="flex items-center space-x-4">
+                <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+                </svg>
+                <h1 class="text-xl font-bold">Parqueadero El PIJAO</h1>
+            </div>
 
+            <!-- Navegación principal -->
+            <nav class="hidden md:flex items-center space-x-6">
+                <a href="{% url 'dashboard' %}" class="text-sm hover:underline" class="scrolltop">Inicio</a>
+                <a href="{% url 'gestion_abonados' %}" class="text-sm hover:underline">Membresías</a>
+                <a href="{% url 'tarifas' %}" class="text-sm hover:underline">Tarifas</a>
+               <!--  <a href="{% url 'tarifas' %}" class="text-sm hover:underline">Tarifas</a>-->           
+            </nav>
+
+            <!-- Usuario -->
+            <div class="flex items-center space-x-4">
+                <span class="hidden sm:block text-sm">Bienvenido, {{ request.user.username }}</span>
+                <div class="relative group">
+                    <button class="flex items-center focus:outline-none" onclick="toggleMenu()">
+                        <span class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center font-bold uppercase">
+                            {{ request.user.username|first }}
+                        </span>
+                    </button>
+                    <div id="userMenu" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 hidden text-gray-800">
+                        <a href="{% url 'generar_reporte' %}" class="block px-4 py-2 text-sm hover:bg-gray-100">Generar Reporte</a>
+                        <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm hover:bg-gray-100">Cerrar sesión</a>
+                    </div>
+                </div>
+
+                <!-- Botón de menú móvil -->
+                <button class="md:hidden focus:outline-none">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Menú móvil -->
+        <div class="md:hidden mt-2 space-y-2">
+            <a href="{% url 'dashboard' %}" class="block text-sm hover:underline">Inicio</a>
+            <a href="{% url 'gestion_abonados' %}" class="block text-sm hover:underline">Membresías</a>
+            <a href="{% url 'tarifas' %}" class="block text-sm hover:underline">Tarifas</a>
+            <a href="{% url 'generar_reporte' %}" class="block text-sm hover:underline">Generar Reporte</a>
+        </div>
+    </div>
+</header>
     <!-- Contenido principal -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {% block content %}
@@ -59,6 +112,21 @@
                 input.type = 'password';
             }
         }
+
+        // Función para el menú de usuario
+        function toggleMenu() {
+            const menu = document.getElementById('userMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Cerrar el menú al hacer clic fuera
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('userMenu');
+            const button = event.target.closest('button');
+            if (!menu.contains(event.target) && !button) {
+                menu.classList.add('hidden');
+            }
+        });
     </script>
     
     {% block scripts %}
