@@ -281,6 +281,11 @@ def procesar_salida_vehiculo(request, registro_id):
         try:
             registro = get_object_or_404(RegistroParqueo, id=registro_id, esta_activo=True)
             
+            # Verificar si el vehículo tiene membresía activa
+            if registro.vehiculo.tiene_membresia_activa():
+                messages.error(request, "Este vehículo tiene una membresía activa. No se puede registrar salida.")
+                return redirect('dashboard')
+            
             if registro.registrar_salida():
                 # Actualizar estadísticas
                 estadistica = EstadisticaDiaria.obtener_estadistica_dia()
@@ -334,8 +339,13 @@ def registrar_entrada(request):
                 defaults={'tipo': tipo}
             )
 
+            # Verificar si el vehículo tiene membresía activa
+            if vehiculo.tiene_membresia_activa():
+                messages.error(request, "Este vehículo tiene una membresía activa. No se puede registrar entrada/salida.")
+                return redirect('dashboard')
+
             # Verificar si el vehículo ya tiene un registro activo
-            if RegistroParqueo.objects.filter(vehiculo=vehiculo, esta_activo=True).exists():
+            if vehiculo.tiene_registro_activo():
                 messages.error(request, "Este vehículo ya tiene un registro activo")
                 return redirect('dashboard')
 
@@ -411,6 +421,11 @@ def agregar_abonado(request):
             # Verificar si ya tiene una membresía activa
             if vehiculo.tiene_membresia_activa():
                 messages.error(request, f'El vehículo {placa} ya tiene una membresía activa')
+                return redirect('dashboard')
+            
+            # Verificar si tiene un registro activo
+            if vehiculo.tiene_registro_activo():
+                messages.error(request, f'El vehículo {placa} tiene un registro de entrada activo. Debe registrar la salida antes de crear la membresía.')
                 return redirect('dashboard')
             
             # Calcular fecha de fin (1 mes desde ahora)

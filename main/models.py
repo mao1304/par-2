@@ -72,6 +72,10 @@ class Vehiculo(models.Model):
             fecha_inicio__lte=ahora
         ).exists()
 
+    def tiene_registro_activo(self):
+        """Verifica si el vehículo tiene un registro de parqueo activo"""
+        return self.registros.filter(esta_activo=True).exists()
+
 
 class RegistroParqueo(models.Model):
     vehiculo = models.ForeignKey(Vehiculo, on_delete=models.CASCADE, related_name='registros')
