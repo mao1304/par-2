@@ -22,4 +22,6 @@ urlpatterns = [
     path('eliminar_abonado/<int:suscripcion_id>/', eliminar_abonado, name='eliminar_abonado'),
     path('renovar_abonado/<int:suscripcion_id>/', renovar_abonado, name='renovar_abonado'),
     path('generar-reporte/', generar_reporte, name='generar_reporte'),
+    path('vehiculos-activos/', views.vehiculos_con_entrada_activa, name='vehiculos_activos'),
+
 ]

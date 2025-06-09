@@ -6,7 +6,6 @@ from django.views.decorators.http import require_http_methods
 from django.urls import reverse
 import win32ui
 import win32print
-
 @require_http_methods(["GET", "POST"])
 def login_view(request):
     if request.user.is_authenticated:
@@ -127,51 +126,76 @@ def tarifas(request):
         messages.error(request, "No tienes permiso para acceder a esta página")
         return redirect('dashboard')
     
+    # Obtener o crear tarifas con valores por defecto
+    tarifa_carro_obj, _ = Tarifa.objects.get_or_create(
+        tipo_vehiculo='carro',
+        defaults={
+            'valor_por_hora': 5000,
+            'valor_estadia_larga': None,
+            'usuario_actualizacion': request.user
+        }
+    )
+    
+    tarifa_moto_obj, _ = Tarifa.objects.get_or_create(
+        tipo_vehiculo='moto',
+        defaults={
+            'valor_por_hora': 2000,
+            'valor_estadia_larga': None,
+            'usuario_actualizacion': request.user
+        }
+    )
+
     if request.method == 'POST':
         try:
+            # Procesar datos del formulario
             tarifa_carro = request.POST.get('tarifa_carro')
             tarifa_moto = request.POST.get('tarifa_moto')
+            tarifa_carro_larga = request.POST.get('tarifa_carro_larga')
+            tarifa_moto_larga = request.POST.get('tarifa_moto_larga')
             
-            # Actualizar o crear tarifa para carros
+            # Actualizar tarifa para carros
             Tarifa.objects.update_or_create(
                 tipo_vehiculo='carro',
                 defaults={
                     'valor_por_hora': float(tarifa_carro),
+                    'valor_estadia_larga': float(tarifa_carro_larga) if tarifa_carro_larga else None,
                     'usuario_actualizacion': request.user
                 }
             )
             
-            # Actualizar o crear tarifa para motos
+            # Actualizar tarifa para motos
             Tarifa.objects.update_or_create(
                 tipo_vehiculo='moto',
                 defaults={
                     'valor_por_hora': float(tarifa_moto),
+                    'valor_estadia_larga': float(tarifa_moto_larga) if tarifa_moto_larga else None,
                     'usuario_actualizacion': request.user
                 }
             )
             
             messages.success(request, "Tarifas actualizadas correctamente")
+            
+            # Actualizar objetos para el contexto
+            tarifa_carro_obj.refresh_from_db()
+            tarifa_moto_obj.refresh_from_db()
+            
+        except ValueError:
+            messages.error(request, "Por favor ingrese valores numéricos válidos")
         except Exception as e:
             messages.error(request, f"Error al actualizar tarifas: {str(e)}")
     
-    # Obtener tarifas actuales
-    try:
-        tarifa_carro = Tarifa.objects.get(tipo_vehiculo='carro').valor_por_hora
-    except Tarifa.DoesNotExist:
-        tarifa_carro = 0
-    
-    try:
-        tarifa_moto = Tarifa.objects.get(tipo_vehiculo='moto').valor_por_hora
-    except Tarifa.DoesNotExist:
-        tarifa_moto = 0
-    
     context = {
-        'tarifa_carro': tarifa_carro,
-        'tarifa_moto': tarifa_moto,
+        'tarifa_carro': {
+            'valor_por_hora': tarifa_carro_obj.valor_por_hora,
+            'valor_estadia_larga': tarifa_carro_obj.valor_estadia_larga,
+        },
+        'tarifa_moto': {
+            'valor_por_hora': tarifa_moto_obj.valor_por_hora,
+            'valor_estadia_larga': tarifa_moto_obj.valor_estadia_larga,
+        },
     }
     
     return render(request, 'tarifas.html', context)
-
 @login_required
 def abonados(request):
     pass
@@ -219,11 +243,10 @@ def buscar_vehiculo(request):
                     horas_exactas = tiempo_estadia.total_seconds() / 3600
                     horas_cobradas = math.ceil(horas_exactas)
                     
-                    # Obtener tarifa y calcular valor
-                    try:
-                        tarifa = Tarifa.objects.get(tipo_vehiculo=vehiculo_info.tipo)
-                        valor_a_pagar = round(horas_cobradas * float(tarifa.valor_por_hora), 2)
-                    except Tarifa.DoesNotExist:
+                    # Usar el método del modelo para calcular el valor
+                    valor_a_pagar = registro_activo.calcular_valor_estadia()
+                    
+                    if valor_a_pagar is None:
                         messages.error(request, f'No se encontró tarifa para vehículos tipo {vehiculo_info.tipo}')
                         valor_a_pagar = 0
                     
@@ -617,3 +640,73 @@ def generar_reporte(request):
 
 
 
+from django.shortcuts import render
+from django.utils import timezone
+from .models import Vehiculo, RegistroParqueo
+
+def vehiculos_con_entrada_activa(request):
+    """
+    Vista que muestra únicamente los vehículos que están dentro del parqueadero
+    pero NO tienen membresía activa (deben pagar por horas)
+    """
+    
+    # Obtener todos los vehículos que tienen al menos un registro activo
+    # pero que NO tienen una suscripción mensual activa
+    vehiculos_sin_membresia = Vehiculo.objects.filter(
+        registros__esta_activo=True
+    ).exclude(
+        # Excluir vehículos con suscripción activa
+        suscripciones__fecha_inicio__lte=timezone.now(),
+        suscripciones__fecha_fin__gte=timezone.now()
+    ).distinct()
+    
+    # Para cada vehículo, obtener su último registro activo y calcular información
+    vehiculos_con_info = []
+    total_carros = 0
+    total_motos = 0
+    total_estimado = 0
+    
+    for vehiculo in vehiculos_sin_membresia:
+        # Obtener el último registro activo
+        ultimo_registro = vehiculo.registros.filter(esta_activo=True).latest('fecha_entrada')
+        
+        # Calcular tiempo estacionado
+        tiempo_estacionado = timezone.now() - ultimo_registro.fecha_entrada
+        
+        # Calcular horas y minutos
+        segundos_totales = int(tiempo_estacionado.total_seconds())
+        horas = segundos_totales // 3600
+        minutos = (segundos_totales % 3600) // 60
+        
+        # Calcular valor estimado usando el mismo método del modelo
+        valor_estimado = ultimo_registro.calcular_valor_estadia()
+        
+        # Contar por tipo
+        if vehiculo.tipo == 'carro':
+            total_carros += 1
+        else:
+            total_motos += 1
+            
+        if valor_estimado:
+            total_estimado += valor_estimado
+        
+        vehiculos_con_info.append({
+            'vehiculo': vehiculo,
+            'ultimo_registro': ultimo_registro,
+            'horas': horas,
+            'minutos': minutos,
+            'valor_estimado': valor_estimado,
+        })
+    
+    # Ordenar por tiempo de entrada (más recientes primero)
+    vehiculos_con_info.sort(key=lambda x: x['ultimo_registro'].fecha_entrada, reverse=True)
+    
+    context = {
+        'vehiculos': vehiculos_con_info,
+        'fecha_actual': timezone.now(),
+        'total_carros': total_carros,
+        'total_motos': total_motos,
+        'total_estimado': total_estimado,
+    }
+    
+    return render(request, 'vehiculos_activos.html', context)

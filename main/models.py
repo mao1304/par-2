@@ -172,18 +172,41 @@ class RegistroParqueo(models.Model):
             raise
 
     def calcular_valor_estadia(self):
-        """Calcula el valor a pagar por el tiempo estacionado (se cobra cada hora completa)"""
-        if self.fecha_salida and self.fecha_entrada:
-            tiempo_estacionado = self.fecha_salida - self.fecha_entrada
-            horas = tiempo_estacionado.total_seconds() / 3600
-            horas_cobradas = math.ceil(horas)  # Redondea hacia arriba
-
-            try:
-                tarifa = Tarifa.objects.get(tipo_vehiculo=self.vehiculo.tipo)
+        """
+        Calcula el valor a pagar por el tiempo estacionado considerando:
+        - Tarifa por horas si es <= 6 horas
+        - Tarifa diaria si es > 6 horas (cobrando días completos)
+        """
+        # Si no hay fecha de entrada, no podemos calcular
+        if not self.fecha_entrada:
+            return None
+            
+        # Calcular tiempo estacionado
+        tiempo_actual = timezone.now() if not self.fecha_salida else self.fecha_salida
+        tiempo_estacionado = tiempo_actual - self.fecha_entrada
+        horas = tiempo_estacionado.total_seconds() / 3600
+        
+        try:
+            tarifa = Tarifa.objects.get(tipo_vehiculo=self.vehiculo.tipo)
+            
+            # Si es 6 horas o menos, cobrar por horas
+            if horas <= 6:
+                horas_cobradas = math.ceil(horas)  # Redondea hacia arriba
                 return round(horas_cobradas * float(tarifa.valor_por_hora), 2)
-            except Tarifa.DoesNotExist:
-                return None
-        return None
+            
+            # Si es más de 6 horas y existe tarifa de estadía larga
+            elif tarifa.valor_estadia_larga:
+                # Calcular días completos (mínimo 1 día)
+                dias = math.ceil(horas / 24)
+                return round(dias * float(tarifa.valor_estadia_larga), 2)
+            
+            # Si no hay tarifa de estadía larga, seguir cobrando por horas
+            else:
+                horas_cobradas = math.ceil(horas)
+                return round(horas_cobradas * float(tarifa.valor_por_hora), 2)
+                
+        except Tarifa.DoesNotExist:
+            return None
 
     def registrar_salida(self):
         """Método para registrar la salida del vehículo"""
@@ -195,9 +218,148 @@ class RegistroParqueo(models.Model):
             return True
         return False
 
+    # def imprimir_ticket_ingreso(self):
+    #     print("registrar_salida va a imprimir el ticket")
+    #     """Imprime el ticket de ingreso del vehículo con formato similar al ejemplo"""
+    #     try:
+    #         printer_name = "POS-80"
+
+    #         # Obtener tarifas del modelo Tarifa
+    #         try:
+    #             tarifa_carro = Tarifa.objects.get(tipo_vehiculo='carro')
+    #             valor_carro = f"${tarifa_carro.valor_por_hora:,.0f}"
+    #         except Tarifa.DoesNotExist:
+    #             valor_carro = "No definida"
+
+    #         try:
+    #             tarifa_moto = Tarifa.objects.get(tipo_vehiculo='moto')
+    #             valor_moto = f"${tarifa_moto.valor_por_hora:,.0f}"
+    #         except Tarifa.DoesNotExist:
+    #             valor_moto = "No definida"
+
+    #         # Crear el contenido del ticket (formato similar al ejemplo)
+    #         fecha_entrada = self.fecha_entrada.strftime('%I:%M %p %Y-%m-%d').upper()
+    #         placa = self.vehiculo.placa
+    #         tipo = "AUTOMOVIL-CAMIONETA" if self.vehiculo.tipo == 'carro' else "MOTOCICLETA"
+
+    #         ticket = f"""
+    #     P
+        
+    #     PARQUEADERO PARKAUTOS
+        
+    #     NIT:12345678-9
+        
+    #     NO RESPONSABLE DE IVA
+        
+    #     CALLE 72#3.26 CENTRO
+        
+    #     TELEFONO:8924988
+        
+    #     HORARIO:6:00 AM A 9:00 PM
+        
+    #     Recibo No:12,345
+        
+    #     Placa:{placa}
+        
+    #     Tarifa:
+    #     {tipo}
+        
+    #     Entrada:
+    #     {fecha_entrada}
+        
+    #     Cajero:
+    #     MAURICIO ALVAREZ
+        
+    #     REGLAMENTO
+    #     * El vehiculo se entregara al portador del recibo
+    #     * No aceptamos ordenes telefónicas ni escritas
+    #     * Retirado el vehiculo no aceptamos reclamos
+    #     * No respondemos por objetos dejados en el vehiculo
+    #     * No respondemos por daños al vehiculo causados por terceros
+    #     * No respondemos por pérdida, daños o hurtos ocurridos como
+    #         consecuencia de incendio, terremoto o otros actos de fuerza mayor
+        
+    #     www.sap-parking.com
+    #     """
+
+    #         # Iniciar impresión
+    #         pdc = win32ui.CreateDC()
+    #         pdc.CreatePrinterDC(printer_name)
+    #         pdc.StartDoc("Ticket de Ingreso")
+    #         pdc.StartPage()
+
+    #         font = win32ui.CreateFont({
+    #             "name": "Courier New",  # Fuente de ancho fijo para mejor alineación
+    #             "height": 20,          # Tamaño un poco más pequeño
+    #             "weight": 400,         # Peso normal
+    #         })
+    #         pdc.SelectObject(font)
+
+    #         lineas = ticket.strip().split("\n")
+    #         x_center = pdc.GetDeviceCaps(8) // 2
+    #         y = 50  # Posición inicial más arriba
+
+    #         for linea in lineas:
+    #             # Eliminar espacios en blanco al inicio y final
+    #             linea = linea.strip()
+                
+    #             # Si la línea está vacía, solo avanzamos el cursor
+    #             if not linea:
+    #                 y += 20
+    #                 continue
+                    
+    #             text_size = pdc.GetTextExtent(linea)
+    #             x = x_center - (text_size[0] // 2)
+    #             pdc.TextOut(x, y, linea)
+    #             y += 30  # Espaciado entre líneas
+
+    #         # Imprimir código de barras
+    #         if self.imagen_codigo_barras:
+    #             try:
+    #                 img_path = self.imagen_codigo_barras.path
+    #                 if os.path.exists(img_path):
+    #                     img = Image.open(img_path)
+    #                     img = img.convert("1")
+    #                     width = 300  # Ancho un poco más pequeño
+    #                     ratio = width / float(img.size[0])
+    #                     height = int(float(img.size[1]) * float(ratio))
+    #                     img = img.resize((width, height), Image.LANCZOS)
+    #                     dib = ImageWin.Dib(img)
+    #                     dib.draw(pdc.GetHandleOutput(), (
+    #                         x_center - img.size[0] // 2,
+    #                         y + 20,  # Espacio antes del código de barras
+    #                         x_center + img.size[0] // 2,
+    #                         y + 20 + img.size[1]
+    #                     ))
+    #                     y += img.size[1] + 40  # Espacio después del código de barras
+    #             except Exception as img_error:
+    #                 print(f"Error al imprimir imagen del código de barras: {img_error}")
+    #                 pdc.TextOut(x_center - 50, y, f"Código: {self.codigo_barras}")
+    #                 y += 30
+
+    #         pdc.EndPage()
+    #         pdc.EndDoc()
+    #         pdc.DeleteDC()
+
+    #         # Comando de corte
+    #         cut_command = b'\x1D\x56\x00'
+    #         hprinter = win32print.OpenPrinter(printer_name)
+    #         try:
+    #             hjob = win32print.StartDocPrinter(hprinter, 1, ("Corte de papel", None, "RAW"))
+    #             win32print.StartPagePrinter(hprinter)
+    #             win32print.WritePrinter(hprinter, cut_command)
+    #             win32print.EndPagePrinter(hprinter)
+    #             win32print.EndDocPrinter(hprinter)
+    #         finally:
+    #             win32print.ClosePrinter(hprinter)
+
+    #         return True
+    #     except Exception as e:
+    #         print(f"Error al imprimir ticket: {e}")
+    #         return False
+
     def imprimir_ticket_ingreso(self):
-        print("registrar_salida va a imprimir el ticket")
-        """Imprime el ticket de ingreso del vehículo con formato similar al ejemplo"""
+        """Imprime el ticket de ingreso del vehículo con el nuevo formato"""
         try:
             printer_name = "POS-80"
 
@@ -214,25 +376,24 @@ class RegistroParqueo(models.Model):
             except Tarifa.DoesNotExist:
                 valor_moto = "No definida"
 
-            # Crear el contenido del ticket (formato similar al ejemplo)
+            # Crear el contenido del ticket con el nuevo formato
             fecha_entrada = self.fecha_entrada.strftime('%I:%M %p %Y-%m-%d').upper()
             placa = self.vehiculo.placa
             tipo = "AUTOMOVIL-CAMIONETA" if self.vehiculo.tipo == 'carro' else "MOTOCICLETA"
 
             ticket = f"""
-    P
+    * El vehiculo se entregara al portador del recibo
+    * No aceptamos ordenes telefónicas ni escritas
+    * Retirado el vehiculo no aceptamos reclamos
+    * No respondemos por objetos dejados en el vehiculo
+    * No respondemos por daños al vehiculo causados por terceros
+    * No respondemos por pérdida, daños o hurtos ocurridos como
+        consecuencia de incendio, terremoto o otros actos de fuerza mayor
     
-    PARQUEADERO PARKAUTOS
+    PARQUEADERO EL PIJAO NIT:1.121.827.084-9
+    NO RESPONSABLE DE IVA Cra. 32 #41-55   CENTRO TELEFONO:3114507417
     
-    NIT:12345678-9
-    
-    NO RESPONSABLE DE IVA
-    
-    CALLE 72#3.26 CENTRO
-    
-    TELEFONO:8924988
-    
-    HORARIO:6:00 AM A 9:00 PM
+    HORARIO:7:00 AM A 6:00 PM
     
     Recibo No:12,345
     
@@ -245,18 +406,7 @@ class RegistroParqueo(models.Model):
     {fecha_entrada}
     
     Cajero:
-    MAURICIO ALVAREZ
-    
-    REGLAMENTO
-    * El vehiculo se entregara al portador del recibo
-    * No aceptamos ordenes telefónicas ni escritas
-    * Retirado el vehiculo no aceptamos reclamos
-    * No respondemos por objetos dejados en el vehiculo
-    * No respondemos por daños al vehiculo causados por terceros
-    * No respondemos por pérdida, daños o hurtos ocurridos como
-        consecuencia de incendio, terremoto o otros actos de fuerza mayor
-    
-    www.sap-parking.com
+    {self.usuario_registro.username if self.usuario_registro else 'Jose'}
     """
 
             # Iniciar impresión
@@ -334,7 +484,6 @@ class RegistroParqueo(models.Model):
         except Exception as e:
             print(f"Error al imprimir ticket: {e}")
             return False
-
 class SuscripcionMensual(models.Model):
     vehiculo = models.ForeignKey(Vehiculo, on_delete=models.CASCADE, related_name='suscripciones')
     nombre_cliente = models.CharField(max_length=100)
@@ -360,6 +509,7 @@ class Tarifa(models.Model):
     )
     tipo_vehiculo = models.CharField(max_length=10, choices=TIPOS, unique=True)
     valor_por_hora = models.FloatField()
+    valor_estadia_larga = models.FloatField(null=True, blank=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
     usuario_actualizacion = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True)
     

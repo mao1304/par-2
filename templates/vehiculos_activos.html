@@ -1,0 +1,656 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container mx-auto px-4 py-6">
+  <!-- Header Section -->
+  <div class="mb-6">
+    <div
+      class="flex flex-col md:flex-row justify-between items-start md:items-center"
+    >
+      <div>
+        <h2 class="text-2xl font-bold text-blue-600 flex items-center mb-1">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M8 7h8m-8 5h8m-4 5v-5m4 5V7"
+            />
+          </svg>
+          Vehículos Activos en Parqueadero
+        </h2>
+        <p class="text-gray-500 text-sm flex items-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 mr-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          Última actualización: {{ fecha_actual|date:"d/m/Y H:i:s" }}
+        </p>
+      </div>
+      <div class="mt-2 md:mt-0">
+        <span
+          class="bg-blue-100 text-blue-800 text-sm font-medium px-4 py-2 rounded-full"
+        >
+          Total: {{ vehiculos|length }} vehículo{{ vehiculos|length|pluralize }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros y búsqueda -->
+  <div class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6">
+    <div class="md:col-span-6">
+      <div class="relative">
+        <div
+          class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
+        <input
+          type="text"
+          id="buscarPlaca"
+          placeholder="Buscar por placa..."
+          class="pl-10 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
+          onkeyup="filtrarTabla()"
+        />
+      </div>
+    </div>
+    <div class="md:col-span-3">
+      <select
+        id="filtroTipo"
+        onchange="filtrarTabla()"
+        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
+      >
+        <option value="">Todos los tipos</option>
+        <option value="Carro">Carros</option>
+        <option value="Moto">Motos</option>
+      </select>
+    </div>
+    <div class="md:col-span-3">
+      <button
+        onclick="location.reload()"
+        class="w-full flex items-center justify-center px-4 py-2 border border-blue-500 text-blue-500 rounded-md hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5 mr-2"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          />
+        </svg>
+        Actualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabla de vehículos -->
+  <div class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200" id="tablaVehiculos">
+        <thead class="bg-gray-800 text-white">
+          <tr>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+            >
+              <div class="flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
+                  />
+                </svg>
+                Placa
+              </div>
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+            >
+              <div class="flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
+                </svg>
+                Tipo
+              </div>
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+            >
+              <div class="flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+                  />
+                </svg>
+                Hora de Entrada
+              </div>
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+            >
+              <div class="flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Tiempo Estacionado
+              </div>
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+            >
+              <div class="flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Valor Estimado
+              </div>
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+            >
+              <div class="flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
+                  />
+                </svg>
+                Código
+              </div>
+            </th>
+            <th
+              class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider"
+            >
+              <div class="flex items-center justify-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                Acciones
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {% for item in vehiculos %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                <span
+                  class="bg-gray-200 text-gray-700 text-xs font-medium px-2.5 py-0.5 rounded-full mr-2"
+                >
+                  {{ forloop.counter }}
+                </span>
+                <span class="font-medium text-blue-600"
+                  >{{ item.vehiculo.placa }}</span
+                >
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              {% if item.vehiculo.tipo == 'carro' %}
+              <span
+                class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full flex items-center w-fit"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-3.5 w-3.5 mr-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
+                </svg>
+                {{ item.vehiculo.get_tipo_display }}
+              </span>
+              {% else %}
+              <span
+                class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full flex items-center w-fit"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-3.5 w-3.5 mr-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
+                </svg>
+                {{ item.vehiculo.get_tipo_display }}
+              </span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div>
+                <div class="font-medium">
+                  {{ item.ultimo_registro.fecha_entrada|date:"H:i" }}
+                </div>
+                <div class="text-xs text-gray-500">
+                  {{ item.ultimo_registro.fecha_entrada|date:"d/m/Y" }}
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                <span
+                  class="bg-yellow-100 text-yellow-800 text-sm font-medium px-2.5 py-0.5 rounded-full"
+                >
+                  {{ item.horas }}h {{ item.minutos }}m
+                </span>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              {% if item.valor_estimado %}
+              <span class="text-green-600 font-bold text-base">
+                ${{ item.valor_estimado|floatformat:0 }}
+              </span>
+              {% else %}
+              <span class="text-gray-500 flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 mr-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8.228 9c.549-1.756 2.924-2 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                N/A
+              </span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              {% if item.ultimo_registro.codigo_barras %}
+              <code class="bg-gray-100 px-2 py-1 rounded text-sm">
+                {{ item.ultimo_registro.codigo_barras }}
+              </code>
+              {% else %}
+              <span class="text-gray-500 flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 mr-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+                Sin código
+              </span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-center">
+              <div class="flex justify-center space-x-1">
+                <button
+                  type="button"
+                  onclick="verDetalles('{{ item.vehiculo.placa }}')"
+                  class="text-blue-600 hover:bg-blue-100 p-1.5 rounded-full transition-colors"
+                  title="Ver detalles"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="px-6 py-12 text-center">
+              <div class="flex flex-col items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-12 w-12 text-gray-400 mb-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                  />
+                </svg>
+                <h5 class="text-lg font-medium text-gray-500">
+                  No hay vehículos activos
+                </h5>
+                <p class="text-gray-500 mt-1">
+                  Todos los espacios están disponibles
+                </p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Resumen estadístico -->
+  {% if vehiculos %}
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+    <div class="bg-blue-600 text-white rounded-lg shadow p-6 text-center">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-10 w-10 mx-auto mb-3"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+        />
+      </svg>
+      <h3 class="text-3xl font-bold mb-1">{{ vehiculos|length }}</h3>
+      <p class="text-blue-100">Vehículos Activos</p>
+    </div>
+    <div class="bg-blue-500 text-white rounded-lg shadow p-6 text-center">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-10 w-10 mx-auto mb-3"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+        />
+      </svg>
+      <h3 class="text-3xl font-bold mb-1">{{ total_carros|default:0 }}</h3>
+      <p class="text-blue-100">Carros</p>
+    </div>
+    <div class="bg-green-600 text-white rounded-lg shadow p-6 text-center">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-10 w-10 mx-auto mb-3"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+        />
+      </svg>
+      <h3 class="text-3xl font-bold mb-1">{{ total_motos|default:0 }}</h3>
+      <p class="text-green-100">Motos</p>
+    </div>
+    <div class="bg-yellow-500 text-gray-900 rounded-lg shadow p-6 text-center">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-10 w-10 mx-auto mb-3"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+      <h3 class="text-3xl font-bold mb-1">
+        ${{ total_estimado|default:0|floatformat:0 }}
+      </h3>
+      <p class="text-yellow-900">Valor Estimado</p>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Modal para detalles del vehículo -->
+<div
+  id="modalDetalles"
+  class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4"
+>
+  <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+    <div class="flex items-center justify-between p-4 border-b">
+      <h5 class="text-lg font-medium">Detalles del Vehículo</h5>
+      <button
+        type="button"
+        onclick="cerrarModal()"
+        class="text-gray-400 hover:text-gray-500"
+      >
+        <svg
+          class="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    </div>
+    <div class="p-4" id="contenidoDetalles">
+      <!-- Contenido cargado dinámicamente -->
+    </div>
+  </div>
+</div>
+
+<script>
+  // Función para filtrar la tabla
+  function filtrarTabla() {
+    const busqueda = document.getElementById("buscarPlaca").value.toLowerCase();
+    const filtroTipo = document.getElementById("filtroTipo").value;
+    const filas = document.querySelectorAll("#tablaVehiculos tbody tr");
+
+    filas.forEach((fila) => {
+      if (fila.cells.length === 1) return; // Skip empty row
+
+      const placa = fila.cells[0].textContent.toLowerCase();
+      const tipo = fila.cells[1].textContent;
+
+      const coincidePlaca = placa.includes(busqueda);
+      const coincideTipo = !filtroTipo || tipo.includes(filtroTipo);
+
+      fila.style.display = coincidePlaca && coincideTipo ? "" : "none";
+    });
+  }
+
+  // Función para ver detalles
+  function verDetalles(placa) {
+    // Redirigir a la página de búsqueda de vehículos
+    window.location.href = `/buscar-vehiculo/?placa=${encodeURIComponent(
+      placa
+    )}`;
+  }
+
+  // Función para cerrar modal
+  function cerrarModal() {
+    document.getElementById("modalDetalles").classList.add("hidden");
+  }
+
+  // Función para registrar salida
+  function registrarSalida(registroId) {
+    if (confirm("¿Está seguro de registrar la salida de este vehículo?")) {
+      // Aquí iría la lógica para registrar la salida
+      console.log("Registrando salida para registro:", registroId);
+      // Ejemplo de redirección o AJAX call
+      // window.location.href = `/registrar-salida/${registroId}/`;
+    }
+  }
+
+  // Función para imprimir ticket
+  function imprimirTicket(registroId) {
+    // Aquí iría la lógica para imprimir el ticket
+    console.log("Imprimiendo ticket para registro:", registroId);
+    // Ejemplo: window.open(`/imprimir-ticket/${registroId}/`, '_blank');
+  }
+
+  // Auto-refresh cada 30 segundos
+  setInterval(function () {
+    location.reload();
+  }, 30000);
+
+  // Event listener para cerrar modal con Escape
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+      cerrarModal();
+    }
+  });
+</script>
+{% endblock %}
