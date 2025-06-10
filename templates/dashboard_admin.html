@@ -187,95 +187,157 @@
 
         <!-- Sección de abonados -->
         <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-semibold">Gestión de Membresías</h2>
-                <a href="{% url 'gestion_abonados' %}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
-                    Ver todas las membresías
-                </a>
-            </div>
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold">Gestión de Membresías</h2>
+        <a href="{% url 'gestion_abonados' %}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
+            Ver todas las membresías
+        </a>
+    </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div class="text-center p-4 bg-blue-50 rounded-lg">
-                    <div class="text-2xl font-bold text-blue-600">{{ abonados_carros }}</div>
-                    <div class="text-sm text-gray-600">Carros</div>
-                </div>
-                <div class="text-center p-4 bg-purple-50 rounded-lg">
-                    <div class="text-2xl font-bold text-purple-600">{{ abonados_motos }}</div>
-                    <div class="text-sm text-gray-600">Motos</div>
-                </div>
-                <div class="text-center p-4 bg-green-50 rounded-lg">
-                    <div class="text-2xl font-bold text-green-600">${{ ingresos_mensuales|intcomma }}</div>
-                    <div class="text-sm text-gray-600">Ingresos Mensuales</div>
-                </div>
-            </div>
-
-            <!-- Formulario rápido para nuevo abonado -->
-            <form method="POST" action="{% url 'agregar_abonado' %}" class="space-y-4">
-                {% csrf_token %}
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Placa</label>
-                        <input
-                            type="text"
-                            name="placa"
-                            placeholder="ABC123"
-                            maxlength="6"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                        >
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                        <select
-                            name="tipo"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                        >
-                            <option value="">Seleccionar</option>
-                            <option value="carro">Carro</option>
-                            <option value="moto">Moto</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-                        <input
-                            type="text"
-                            name="nombre"
-                            placeholder="Nombre completo"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                        >
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-                        <input
-                            type="tel"
-                            name="telefono"
-                            placeholder="3001234567"
-                            pattern="[0-9]{10}"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                        >
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Monto</label>
-                        <input
-                            type="number"
-                            name="monto"
-                            placeholder="Valor"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                        >
-                    </div>
-                </div>
-                <button
-                    type="submit"
-                    class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-                >
-                    Agregar Abonado
-                </button>
-            </form>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="text-center p-4 bg-blue-50 rounded-lg">
+            <div class="text-2xl font-bold text-blue-600">{{ abonados_carros }}</div>
+            <div class="text-sm text-gray-600">Carros</div>
+        </div>
+        <div class="text-center p-4 bg-purple-50 rounded-lg">
+            <div class="text-2xl font-bold text-purple-600">{{ abonados_motos }}</div>
+            <div class="text-sm text-gray-600">Motos</div>
+        </div>
+        <div class="text-center p-4 bg-green-50 rounded-lg">
+            <div class="text-2xl font-bold text-green-600">${{ ingresos_mensuales|floatformat:0|intcomma}}</div>
+            <div class="text-sm text-gray-600">Ingresos Mensuales</div>
         </div>
     </div>
+
+    <!-- Formulario rápido para nuevo abonado -->
+    <form method="POST" action="{% url 'agregar_abonado' %}" class="space-y-4">
+        {% csrf_token %}
+        
+        <!-- Primera fila: datos básicos -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Placa</label>
+                <input
+                    type="text"
+                    name="placa"
+                    placeholder="ABC123"
+                    maxlength="6"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                >
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                <select
+                    name="tipo"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                >
+                    <option value="">Seleccionar</option>
+                    <option value="carro">Carro</option>
+                    <option value="moto">Moto</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                <input
+                    type="text"
+                    name="nombre"
+                    placeholder="Nombre completo"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                >
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                <input
+                    type="tel"
+                    name="telefono"
+                    placeholder="3001234567"
+                    pattern="[0-9]{10}"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                >
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Monto</label>
+                <input
+                    type="number"
+                    name="monto"
+                    placeholder="Valor"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                >
+            </div>
+        </div>
+        
+        <!-- Segunda fila: fechas -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de Inicio</label>
+                <input
+                    type="date"
+                    name="fecha_inicio"
+                    id="fecha_inicio"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                >
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de Fin</label>
+                <input
+                    type="date"
+                    name="fecha_fin"
+                    id="fecha_fin"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                >
+            </div>
+        </div>
+        
+        <button
+            type="submit"
+            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+        >
+            Agregar Abonado
+        </button>
+    </form>
 </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fechaInicio = document.getElementById('fecha_inicio');
+    const fechaFin = document.getElementById('fecha_fin');
+    
+    // Establecer fecha de inicio como hoy por defecto
+    const hoy = new Date().toISOString().split('T')[0];
+    fechaInicio.value = hoy;
+    
+    // Establecer fecha de fin como 30 días después por defecto
+    const fecha30Dias = new Date();
+    fecha30Dias.setDate(fecha30Dias.getDate() + 30);
+    fechaFin.value = fecha30Dias.toISOString().split('T')[0];
+    
+    // Validar que la fecha de fin sea posterior a la fecha de inicio
+    fechaInicio.addEventListener('change', function() {
+        fechaFin.min = this.value;
+        if (fechaFin.value && fechaFin.value <= this.value) {
+            // Si la fecha de fin es menor o igual, ajustarla
+            const nuevaFecha = new Date(this.value);
+            nuevaFecha.setDate(nuevaFecha.getDate() + 1);
+            fechaFin.value = nuevaFecha.toISOString().split('T')[0];
+        }
+    });
+    
+    fechaFin.addEventListener('change', function() {
+        if (this.value <= fechaInicio.value) {
+            alert('La fecha de fin debe ser posterior a la fecha de inicio');
+            const nuevaFecha = new Date(fechaInicio.value);
+            nuevaFecha.setDate(nuevaFecha.getDate() + 1);
+            this.value = nuevaFecha.toISOString().split('T')[0];
+        }
+    });
+});
+</script>
 {% endblock %}

@@ -388,12 +388,11 @@ class RegistroParqueo(models.Model):
     * No respondemos por objetos dejados en el vehiculo
     * No respondemos por daños al vehiculo causados por terceros
     * No respondemos por pérdida, daños o hurtos ocurridos como
-        consecuencia de incendio, terremoto o otros actos de fuerza mayor
+      consecuencia de incendio, terremoto o otros actos de fuerza mayor
     
     PARQUEADERO EL PIJAO NIT:1.121.827.084-9
-    NO RESPONSABLE DE IVA Cra. 32 #41-55   CENTRO TELEFONO:3114507417
-    
-    HORARIO:7:00 AM A 6:00 PM
+    NO RESPONSABLE DE IVA Cra.32 #41-55/57 CENTRO 
+    TELEFONO:3114507417 HORARIO:7:00 AM A 6:00 PM
     
     Recibo No:12,345
     
@@ -488,7 +487,7 @@ class SuscripcionMensual(models.Model):
     vehiculo = models.ForeignKey(Vehiculo, on_delete=models.CASCADE, related_name='suscripciones')
     nombre_cliente = models.CharField(max_length=100)
     telefono_cliente = models.CharField(max_length=100)
-    fecha_inicio = models.DateTimeField(default=timezone.now)
+    fecha_inicio = models.DateTimeField()
     fecha_fin = models.DateTimeField()
     monto_pagado = models.FloatField()
     usuario_registro = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True)

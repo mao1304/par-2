@@ -206,6 +206,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Q
+from datetime import datetime, timedelta
+
 import math
 
 @login_required
@@ -419,67 +421,79 @@ def gestion_abonados(request):
 
 @login_required
 def agregar_abonado(request):
-    """
-    Vista para agregar un nuevo abonado
-    """
-    if request.method == 'POST':
-        try:
-            placa = request.POST.get('placa').upper()
-            tipo = request.POST.get('tipo')
-            nombre = request.POST.get('nombre')
-            telefono = request.POST.get('telefono')
-            monto = float(request.POST.get('monto'))
-            
-            # Validar que el teléfono tenga 10 dígitos
-            if not telefono.isdigit() or len(telefono) != 10:
-                messages.error(request, 'El teléfono debe tener 10 dígitos numéricos')
-                return redirect('dashboard')
-            
-            # Verificar si el vehículo existe
-            vehiculo, created = Vehiculo.objects.get_or_create(
-                placa=placa,
-                defaults={'tipo': tipo}
-            )
-            
-            # Verificar si ya tiene una membresía activa
-            if vehiculo.tiene_membresia_activa():
-                messages.error(request, f'El vehículo {placa} ya tiene una membresía activa')
-                return redirect('dashboard')
-            
-            # Verificar si tiene un registro activo
-            if vehiculo.tiene_registro_activo():
-                messages.error(request, f'El vehículo {placa} tiene un registro de entrada activo. Debe registrar la salida antes de crear la membresía.')
-                return redirect('dashboard')
-            
-            # Calcular fecha de fin (1 mes desde ahora)
-            fecha_inicio = timezone.now()
-            fecha_fin = fecha_inicio + timedelta(days=30)
-            
-            # Crear la suscripción
-            suscripcion = SuscripcionMensual.objects.create(
-                vehiculo=vehiculo,
-                nombre_cliente=nombre,
-                telefono_cliente=telefono,
-                fecha_inicio=fecha_inicio,
-                fecha_fin=fecha_fin,
-                monto_pagado=monto,
-                usuario_registro=request.user
-            )
-            
-            # Actualizar estadísticas
-            estadistica = EstadisticaDiaria.obtener_estadistica_dia()
-            estadistica.actualizar_estadisticas(
-                tipo_vehiculo=tipo,
-                monto=monto,
-                es_membresia=True
-            )
-            
-            messages.success(request, f'Membresía creada exitosamente para el vehículo {placa}')
-            
-        except Exception as e:
-            messages.error(request, f'Error al crear la membresía: {str(e)}')
-    
-    return redirect('dashboard')
+   """
+   Vista para agregar un nuevo abonado
+   """
+   if request.method == 'POST':
+       try:
+           placa = request.POST.get('placa').upper()
+           tipo = request.POST.get('tipo')
+           nombre = request.POST.get('nombre')
+           telefono = request.POST.get('telefono')
+           monto = float(request.POST.get('monto'))
+           
+           # Validar que el teléfono tenga 10 dígitos
+           if not telefono.isdigit() or len(telefono) != 10:
+               messages.error(request, 'El teléfono debe tener 10 dígitos numéricos')
+               return redirect('dashboard')
+           
+           # Obtener fechas del formulario
+           fecha_inicio_str = request.POST.get('fecha_inicio')
+           fecha_fin_str = request.POST.get('fecha_fin')
+           
+           # Convertir strings a datetime
+           from datetime import datetime
+           fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').replace(tzinfo=timezone.get_current_timezone())
+           fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').replace(tzinfo=timezone.get_current_timezone())
+           
+           # Validar que fecha_fin sea posterior a fecha_inicio
+           if fecha_fin <= fecha_inicio:
+               messages.error(request, 'La fecha de fin debe ser posterior a la fecha de inicio')
+               return redirect('dashboard')
+           
+           # Verificar si el vehículo existe
+           vehiculo, created = Vehiculo.objects.get_or_create(
+               placa=placa,
+               defaults={'tipo': tipo}
+           )
+           
+           # Verificar si ya tiene una membresía activa
+           if vehiculo.tiene_membresia_activa():
+               messages.error(request, f'El vehículo {placa} ya tiene una membresía activa')
+               return redirect('dashboard')
+           
+           # Verificar si tiene un registro activo
+           if vehiculo.tiene_registro_activo():
+               messages.error(request, f'El vehículo {placa} tiene un registro de entrada activo. Debe registrar la salida antes de crear la membresía.')
+               return redirect('dashboard')
+           
+           # Crear la suscripción
+           suscripcion = SuscripcionMensual.objects.create(
+               vehiculo=vehiculo,
+               nombre_cliente=nombre,
+               telefono_cliente=telefono,
+               fecha_inicio=fecha_inicio,
+               fecha_fin=fecha_fin,
+               monto_pagado=monto,
+               usuario_registro=request.user
+           )
+           
+           # Actualizar estadísticas
+           estadistica = EstadisticaDiaria.obtener_estadistica_dia()
+           estadistica.actualizar_estadisticas(
+               tipo_vehiculo=tipo,
+               monto=monto,
+               es_membresia=True
+           )
+           
+           messages.success(request, f'Membresía creada exitosamente para el vehículo {placa}')
+           
+       except ValueError:
+           messages.error(request, 'Formato de fecha inválido. Use el formato YYYY-MM-DD')
+       except Exception as e:
+           messages.error(request, f'Error al crear la membresía: {str(e)}')
+   
+   return redirect('dashboard')
 
 @login_required
 def eliminar_abonado(request, suscripcion_id):
@@ -514,19 +528,65 @@ def renovar_abonado(request, suscripcion_id):
             suscripcion = get_object_or_404(SuscripcionMensual, id=suscripcion_id)
             monto = float(request.POST.get('monto'))
             
+            # Obtener fechas del formulario (opcionales)
+            fecha_inicio_str = request.POST.get('fecha_inicio')
+            fecha_fin_str = request.POST.get('fecha_fin')
+            
+            # Si se proporcionan las fechas, usarlas; si no, usar valores por defecto
+            if fecha_inicio_str and fecha_fin_str:
+                fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
+                fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
+                
+                # Validar que la fecha de fin sea posterior a la de inicio
+                if fecha_inicio >= fecha_fin:
+                    messages.error(request, 'La fecha de fin debe ser posterior a la fecha de inicio')
+                    return redirect('gestion_abonados')
+            else:
+                # Usar valores por defecto (hoy + 30 días)
+                fecha_inicio = timezone.now().date()
+                fecha_fin = fecha_inicio + timedelta(days=30)
+            
             # Actualizar la suscripción
-            suscripcion.fecha_inicio = timezone.now()
-            suscripcion.fecha_fin = suscripcion.fecha_inicio + timedelta(days=30)
+            suscripcion.fecha_inicio = fecha_inicio
+            suscripcion.fecha_fin = fecha_fin
             suscripcion.monto_pagado = monto
             suscripcion.usuario_registro = request.user
             suscripcion.save()
             
             messages.success(request, f'Membresía renovada exitosamente para el vehículo {suscripcion.vehiculo.placa}')
             
+        except ValueError as e:
+            messages.error(request, 'Error en el formato de fechas proporcionadas')
         except Exception as e:
             messages.error(request, f'Error al renovar la membresía: {str(e)}')
     
     return redirect('gestion_abonados')
+# def renovar_abonado(request, suscripcion_id):
+#     """
+#     Vista para renovar una suscripción (solo administrador)
+#     """
+#     if not request.user.es_administrador():
+#         messages.error(request, "No tienes permiso para realizar esta acción")
+#         return redirect('dashboard')
+    
+#     if request.method == 'POST':
+#         try:
+#             suscripcion = get_object_or_404(SuscripcionMensual, id=suscripcion_id)
+#             monto = float(request.POST.get('monto'))
+            
+#             # Actualizar la suscripción
+#             suscripcion.fecha_inicio = timezone.now()
+#             suscripcion.fecha_fin = suscripcion.fecha_inicio + timedelta(days=30)
+#             suscripcion.monto_pagado = monto
+#             suscripcion.usuario_registro = request.user
+#             suscripcion.save()
+            
+#             messages.success(request, f'Membresía renovada exitosamente para el vehículo {suscripcion.vehiculo.placa}')
+            
+#         except Exception as e:
+#             messages.error(request, f'Error al renovar la membresía: {str(e)}')
+    
+#     return redirect('gestion_abonados')
 
 @login_required
 def reimprimir_ticket(request, registro_id):
@@ -563,9 +623,9 @@ def generar_reporte(request):
         total_ingresos = estadistica.total_ingresos + estadistica.ingresos_membresias
         
         reporte = f"""
-    P
     
-    PARQUEADERO PARKAUTOS
+    
+    PARQUEADERO EL PIJAO NIT:1.121.827.084-9
     
     REPORTE DIARIO
     
@@ -583,7 +643,6 @@ def generar_reporte(request):
     
     Membresías Vendidas: {estadistica.total_membresias}
     
-    www.sap-parking.com
     """
         
         # Imprimir el reporte
