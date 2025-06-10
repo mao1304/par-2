@@ -46,7 +46,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ suscripcion.telefono_cliente }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ suscripcion.fecha_inicio|date:"d/m/Y" }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ suscripcion.fecha_fin|date:"d/m/Y" }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${{ suscripcion.monto_pagado|intcomma }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${{ suscripcion.monto_pagado|floatformat:0|intcomma }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div class="flex space-x-2">
                                     <button onclick="mostrarModalRenovar({{ suscripcion.id }})" 
@@ -124,6 +124,7 @@
     </div>
 </div>
 
+
 <!-- Modal de Renovación -->
 <div id="modalRenovar" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
     <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
@@ -131,11 +132,28 @@
             <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Renovar Membresía</h3>
             <form id="formRenovar" method="POST" class="space-y-4">
                 {% csrf_token %}
+                
+                <!-- Campo Monto -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Monto</label>
                     <input type="number" name="monto" required
                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 </div>
+                
+                <!-- Campo Fecha de Inicio -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Fecha de Inicio</label>
+                    <input type="date" name="fecha_inicio" required
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                
+                <!-- Campo Fecha de Fin -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Fecha de Fin</label>
+                    <input type="date" name="fecha_fin" required
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                
                 <div class="flex justify-end space-x-3">
                     <button type="button" onclick="cerrarModal()"
                             class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
@@ -155,6 +173,18 @@
 function mostrarModalRenovar(suscripcionId) {
     const modal = document.getElementById('modalRenovar');
     const form = document.getElementById('formRenovar');
+    
+    // Establecer la fecha de inicio como hoy por defecto
+    const fechaInicio = document.querySelector('input[name="fecha_inicio"]');
+    const hoy = new Date().toISOString().split('T')[0];
+    fechaInicio.value = hoy;
+    
+    // Establecer la fecha de fin como 30 días después por defecto
+    const fechaFin = document.querySelector('input[name="fecha_fin"]');
+    const fecha30Dias = new Date();
+    fecha30Dias.setDate(fecha30Dias.getDate() + 30);
+    fechaFin.value = fecha30Dias.toISOString().split('T')[0];
+    
     form.action = `/renovar_abonado/${suscripcionId}/`;
     modal.classList.remove('hidden');
 }
@@ -163,5 +193,23 @@ function cerrarModal() {
     const modal = document.getElementById('modalRenovar');
     modal.classList.add('hidden');
 }
+
+// Validar que la fecha de fin sea posterior a la fecha de inicio
+document.addEventListener('DOMContentLoaded', function() {
+    const fechaInicio = document.querySelector('input[name="fecha_inicio"]');
+    const fechaFin = document.querySelector('input[name="fecha_fin"]');
+    
+    if (fechaInicio && fechaFin) {
+        fechaInicio.addEventListener('change', function() {
+            fechaFin.min = this.value;
+            if (fechaFin.value && fechaFin.value <= this.value) {
+                // Si la fecha de fin es menor o igual, ajustarla
+                const nuevaFecha = new Date(this.value);
+                nuevaFecha.setDate(nuevaFecha.getDate() + 1);
+                fechaFin.value = nuevaFecha.toISOString().split('T')[0];
+            }
+        });
+    }
+});
 </script>
 {% endblock %} 
