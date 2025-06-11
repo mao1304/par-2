@@ -300,7 +300,7 @@ def calcular_ingresos_hoy():
 @login_required
 def procesar_salida_vehiculo(request, registro_id):
     """
-    Vista para procesar la salida de un vehículo
+    Vista para procesar la salida de un vehículo con opción de imprimir ticket
     """
     if request.method == 'POST':
         try:
@@ -311,6 +311,9 @@ def procesar_salida_vehiculo(request, registro_id):
                 messages.error(request, "Este vehículo tiene una membresía activa. No se puede registrar salida.")
                 return redirect('dashboard')
             
+            # Obtener la opción de imprimir ticket
+            imprimir_ticket = request.POST.get('imprimir_ticket', 'false').lower() == 'true'
+            
             if registro.registrar_salida():
                 # Actualizar estadísticas
                 estadistica = EstadisticaDiaria.obtener_estadistica_dia()
@@ -319,11 +322,28 @@ def procesar_salida_vehiculo(request, registro_id):
                     monto=registro.valor_pagado
                 )
                 
-                messages.success(request, 
+                # Mensaje base de éxito
+                mensaje_base = (
                     f'Salida registrada exitosamente. '
                     f'Vehículo: {registro.vehiculo.placa} - '
                     f'Valor a pagar: ${registro.valor_pagado:,.2f}'
                 )
+                
+                # Intentar imprimir ticket si se solicitó
+                if imprimir_ticket:
+                    try:
+                        if registro.imprimir_ticket_salida():
+                            messages.success(request, f'{mensaje_base} - Ticket impreso correctamente.')
+                        else:
+                            messages.warning(request, f'{mensaje_base} - ADVERTENCIA: Error al imprimir el ticket.')
+                    except Exception as print_error:
+                        messages.warning(request, 
+                            f'{mensaje_base} - ADVERTENCIA: Error al imprimir ticket: {str(print_error)}'
+                        )
+                else:
+                    # Solo mostrar mensaje de éxito sin impresión
+                    messages.success(request, f'{mensaje_base} - Salida procesada sin ticket.')
+                    
             else:
                 messages.error(request, 'Error al registrar la salida del vehículo.')
                 
@@ -331,7 +351,7 @@ def procesar_salida_vehiculo(request, registro_id):
             messages.error(request, f'Error: {str(e)}')
     
     return redirect('dashboard')
-
+# 
 
 # Función auxiliar para formatear tiempo
 def formatear_tiempo_estadia(tiempo_delta):
