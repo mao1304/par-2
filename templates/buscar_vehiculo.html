@@ -155,27 +155,70 @@
                         {% endif %}
 
                         <!-- Botones de acción -->
-                        <div class="mt-6 pt-6 border-t flex gap-4 justify-center">
-                            <form method="POST" action="{% url 'procesar_salida_vehiculo' registro_activo.id %}" 
-                                  onsubmit="return confirm('¿Confirma el registro de salida de este vehículo?')">
-                                {% csrf_token %}
-                                <button type="submit" 
-                                        class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 font-semibold">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v-5a2 2 0 00-2-2H4"/>
-                                    </svg>
-                                    Registrar Salida
-                                </button>
-                            </form>
-                            
-                            <a href="{% url 'reimprimir_ticket' registro_activo.id %}" 
-                               class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                                </svg>
-                                Reimprimir Ticket
-                            </a>
-                        </div>
+                        
+<div class="mt-6 pt-6 border-t flex gap-4 justify-center">
+    <!-- Botón principal para registrar salida -->
+    <button type="button" 
+            onclick="abrirModalSalida()"
+            class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 font-semibold">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v-5a2 2 0 00-2-2H4"/>
+        </svg>
+        Registrar Salida
+    </button>
+    
+    <!-- Reimprimir ticket de entrada -->
+    <a href="{% url 'reimprimir_ticket' registro_activo.id %}"
+       class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+        </svg>
+        Reimprimir Entrada
+    </a>
+</div>
+
+<!-- Modal para opciones de salida -->
+<div id="modalSalida" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Opciones de Salida</h3>
+        <p class="text-gray-600 mb-6">¿Cómo desea procesar la salida del vehículo?</p>
+        
+        <div class="flex flex-col gap-3">
+            <!-- Salida con ticket -->
+            <form method="POST" action="{% url 'procesar_salida_vehiculo' registro_activo.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="imprimir_ticket" value="true">
+                <button type="submit" 
+                        class="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2 font-semibold">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                    </svg>
+                    Salida con Ticket de Pago
+                </button>
+            </form>
+            
+            <!-- Salida sin ticket -->
+            <form method="POST" action="{% url 'procesar_salida_vehiculo' registro_activo.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="imprimir_ticket" value="false">
+                <button type="submit" 
+                        class="w-full px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center justify-center gap-2 font-semibold">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v-5a2 2 0 00-2-2H4"/>
+                    </svg>
+                    Salida sin Ticket
+                </button>
+            </form>
+            
+            <!-- Cancelar -->
+            <button type="button" 
+                    onclick="cerrarModalSalida()"
+                    class="w-full px-4 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 font-semibold">
+                Cancelar
+            </button>
+        </div>
+    </div>
+</div>
                     </div>
                 </div>
             {% endif %}
@@ -200,6 +243,23 @@
         </div>
     </div>
 </div>
+
+<script>
+function abrirModalSalida() {
+    document.getElementById('modalSalida').classList.remove('hidden');
+}
+
+function cerrarModalSalida() {
+    document.getElementById('modalSalida').classList.add('hidden');
+}
+
+// Cerrar modal al hacer clic fuera de él
+document.getElementById('modalSalida').addEventListener('click', function(e) {
+    if (e.target === this) {
+        cerrarModalSalida();
+    }
+});
+</script>
 
 <style>
 @media print {
