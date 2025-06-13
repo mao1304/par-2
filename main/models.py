@@ -485,126 +485,126 @@ class RegistroParqueo(models.Model):
             return False
         
 # nuevo salidad
-def imprimir_ticket_salida(self):
-    """Imprime el ticket de salida del vehículo con el formato de factura"""
-    try:
-        printer_name = "POS-80"
-
-        # Formatear fechas
-        fecha_entrada = self.fecha_entrada.strftime('%I:%M %p %Y-%m-%d').upper()
-        fecha_salida = self.fecha_salida.strftime('%I:%M %p %Y-%m-%d').upper() if self.fecha_salida else timezone.now().strftime('%I:%M %p %Y-%m-%d').upper()
-        
-        placa = self.vehiculo.placa
-        precio_pagado = self.valor_pagado
-        
-        # Generar número de recibo (usando el ID del registro)
-        numero_recibo = f"{self.id:06d}"  # Formato: 000001, 000002, etc.
-
-        ticket = f"""
-* El vehiculo se entregara al portador del recibo
-* No aceptamos ordenes telefónicas ni escritas
-* Retirado el vehiculo no aceptamos reclamos
-* No respondemos por objetos dejados en el vehiculo
-* No respondemos por daños al vehiculo causados por terceros
-* No respondemos por pérdida, daños o hurtos ocurridos como
-  consecuencia de incendio, terremoto o otros actos de fuerza mayor
-
-PARQUEADERO EL PIJAO NIT:1.121.827.084-9
-NO RESPONSABLE DE IVA Cra.32 #41-55/57 CENTRO 
-TELEFONO:3114507417 HORARIO:7:00 AM A 6:00 PM
-
-Recibo No:{numero_recibo}
-
-Placa:{placa}
-
-Precio pagado:${precio_pagado:,.0f}
-
-Entrada:
-{fecha_entrada}
-
-Salida:
-{fecha_salida}
-
-Cajero:
-{self.usuario_registro.username if self.usuario_registro else 'Jose'}
-"""
-
-        # Iniciar impresión
-        pdc = win32ui.CreateDC()
-        pdc.CreatePrinterDC(printer_name)
-        pdc.StartDoc("Ticket de Salida")
-        pdc.StartPage()
-
-        font = win32ui.CreateFont({
-            "name": "Courier New",  # Fuente de ancho fijo para mejor alineación
-            "height": 20,          # Tamaño un poco más pequeño
-            "weight": 400,         # Peso normal
-        })
-        pdc.SelectObject(font)
-
-        lineas = ticket.strip().split("\n")
-        x_center = pdc.GetDeviceCaps(8) // 2
-        y = 50  # Posición inicial más arriba
-
-        for linea in lineas:
-            # Eliminar espacios en blanco al inicio y final
-            linea = linea.strip()
-            
-            # Si la línea está vacía, solo avanzamos el cursor
-            if not linea:
-                y += 20
-                continue
-                
-            text_size = pdc.GetTextExtent(linea)
-            x = x_center - (text_size[0] // 2)
-            pdc.TextOut(x, y, linea)
-            y += 30  # Espaciado entre líneas
-
-        # Imprimir código de barras si existe
-        if hasattr(self, 'imagen_codigo_barras') and self.imagen_codigo_barras:
-            try:
-                img_path = self.imagen_codigo_barras.path
-                if os.path.exists(img_path):
-                    img = Image.open(img_path)
-                    img = img.convert("1")
-                    width = 300  # Ancho un poco más pequeño
-                    ratio = width / float(img.size[0])
-                    height = int(float(img.size[1]) * float(ratio))
-                    img = img.resize((width, height), Image.LANCZOS)
-                    dib = ImageWin.Dib(img)
-                    dib.draw(pdc.GetHandleOutput(), (
-                        x_center - img.size[0] // 2,
-                        y + 20,  # Espacio antes del código de barras
-                        x_center + img.size[0] // 2,
-                        y + 20 + img.size[1]
-                    ))
-                    y += img.size[1] + 40  # Espacio después del código de barras
-            except Exception as img_error:
-                print(f"Error al imprimir imagen del código de barras: {img_error}")
-                if hasattr(self, 'codigo_barras'):
-                    pdc.TextOut(x_center - 50, y, f"Código: {self.codigo_barras}")
-                    y += 30
-
-        pdc.EndPage()
-        pdc.EndDoc()
-        pdc.DeleteDC()
-
-        # Comando de corte
-        cut_command = b'\x1D\x56\x00'
-        hprinter = win32print.OpenPrinter(printer_name)
+    def imprimir_ticket_salida(self):
+        """Imprime el ticket de salida del vehículo con el formato de factura"""
         try:
-            hjob = win32print.StartDocPrinter(hprinter, 1, ("Corte de papel", None, "RAW"))
-            win32print.StartPagePrinter(hprinter)
-            win32print.WritePrinter(hprinter, cut_command)
-            win32print.EndPagePrinter(hprinter)
-            win32print.EndDocPrinter(hprinter)
-        finally:
-            win32print.ClosePrinter(hprinter)
+            printer_name = "POS-80"
 
-        return True
-    except Exception as e:
-        print(f"Error al imprimir ticket de salida: {e}")
-        return False
+            # Formatear fechas
+            fecha_entrada = self.fecha_entrada.strftime('%I:%M %p %Y-%m-%d').upper()
+            fecha_salida = self.fecha_salida.strftime('%I:%M %p %Y-%m-%d').upper() if self.fecha_salida else timezone.now().strftime('%I:%M %p %Y-%m-%d').upper()
+            
+            placa = self.vehiculo.placa
+            precio_pagado = self.valor_pagado
+            
+            # Generar número de recibo (usando el ID del registro)
+            numero_recibo = f"{self.id:06d}"  # Formato: 000001, 000002, etc.
+
+            ticket = f"""
+    * El vehiculo se entregara al portador del recibo
+    * No aceptamos ordenes telefónicas ni escritas
+    * Retirado el vehiculo no aceptamos reclamos
+    * No respondemos por objetos dejados en el vehiculo
+    * No respondemos por daños al vehiculo causados por terceros
+    * No respondemos por pérdida, daños o hurtos ocurridos como
+    consecuencia de incendio, terremoto o otros actos de fuerza mayor
+
+    PARQUEADERO EL PIJAO NIT:1.121.827.084-9
+    NO RESPONSABLE DE IVA Cra.32 #41-55/57 CENTRO 
+    TELEFONO:3114507417 HORARIO:7:00 AM A 6:00 PM
+
+    Recibo No:{numero_recibo}
+
+    Placa:{placa}
+
+    Precio pagado:${precio_pagado:,.0f}
+
+    Entrada:
+    {fecha_entrada}
+
+    Salida:
+    {fecha_salida}
+
+    Cajero:
+    {self.usuario_registro.username if self.usuario_registro else 'Jose'}
+    """
+
+            # Iniciar impresión
+            pdc = win32ui.CreateDC()
+            pdc.CreatePrinterDC(printer_name)
+            pdc.StartDoc("Ticket de Salida")
+            pdc.StartPage()
+
+            font = win32ui.CreateFont({
+                "name": "Courier New",  # Fuente de ancho fijo para mejor alineación
+                "height": 20,          # Tamaño un poco más pequeño
+                "weight": 400,         # Peso normal
+            })
+            pdc.SelectObject(font)
+
+            lineas = ticket.strip().split("\n")
+            x_center = pdc.GetDeviceCaps(8) // 2
+            y = 50  # Posición inicial más arriba
+
+            for linea in lineas:
+                # Eliminar espacios en blanco al inicio y final
+                linea = linea.strip()
+                
+                # Si la línea está vacía, solo avanzamos el cursor
+                if not linea:
+                    y += 20
+                    continue
+                    
+                text_size = pdc.GetTextExtent(linea)
+                x = x_center - (text_size[0] // 2)
+                pdc.TextOut(x, y, linea)
+                y += 30  # Espaciado entre líneas
+
+            # Imprimir código de barras si existe
+            if hasattr(self, 'imagen_codigo_barras') and self.imagen_codigo_barras:
+                try:
+                    img_path = self.imagen_codigo_barras.path
+                    if os.path.exists(img_path):
+                        img = Image.open(img_path)
+                        img = img.convert("1")
+                        width = 300  # Ancho un poco más pequeño
+                        ratio = width / float(img.size[0])
+                        height = int(float(img.size[1]) * float(ratio))
+                        img = img.resize((width, height), Image.LANCZOS)
+                        dib = ImageWin.Dib(img)
+                        dib.draw(pdc.GetHandleOutput(), (
+                            x_center - img.size[0] // 2,
+                            y + 20,  # Espacio antes del código de barras
+                            x_center + img.size[0] // 2,
+                            y + 20 + img.size[1]
+                        ))
+                        y += img.size[1] + 40  # Espacio después del código de barras
+                except Exception as img_error:
+                    print(f"Error al imprimir imagen del código de barras: {img_error}")
+                    if hasattr(self, 'codigo_barras'):
+                        pdc.TextOut(x_center - 50, y, f"Código: {self.codigo_barras}")
+                        y += 30
+
+            pdc.EndPage()
+            pdc.EndDoc()
+            pdc.DeleteDC()
+
+            # Comando de corte
+            cut_command = b'\x1D\x56\x00'
+            hprinter = win32print.OpenPrinter(printer_name)
+            try:
+                hjob = win32print.StartDocPrinter(hprinter, 1, ("Corte de papel", None, "RAW"))
+                win32print.StartPagePrinter(hprinter)
+                win32print.WritePrinter(hprinter, cut_command)
+                win32print.EndPagePrinter(hprinter)
+                win32print.EndDocPrinter(hprinter)
+            finally:
+                win32print.ClosePrinter(hprinter)
+
+            return True
+        except Exception as e:
+            print(f"Error al imprimir ticket de salida: {e}")
+            return False
      # 
 class SuscripcionMensual(models.Model):
     vehiculo = models.ForeignKey(Vehiculo, on_delete=models.CASCADE, related_name='suscripciones')
