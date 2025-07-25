@@ -6,5 +6,6 @@ admin.site.register(models.Vehiculo)
 admin.site.register(models.RegistroParqueo)
 admin.site.register(models.SuscripcionMensual)
 admin.site.register(models.Tarifa)
+admin.site.register(models.ParkingData)
 
 

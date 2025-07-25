@@ -678,3 +678,16 @@ class EstadisticaDiaria(models.Model):
             self.total_ingresos += monto
             
         self.save()
+        
+        
+class ParkingData(models.Model):
+    company_name = models.CharField(max_length=100, blank=True)
+    company_address = models.CharField(max_length=200, blank=True)
+    company_phone = models.CharField(max_length=20, blank=True)
+    company_email = models.EmailField(max_length=100,null=True, blank=True)
+    company_website = models.URLField(max_length=100,  null=True, blank=True)
+    company_logo = models.ImageField(upload_to='company_logos/', null=True, blank=True)
+    def __str__(self):
+        
+        return self.company_name
+    

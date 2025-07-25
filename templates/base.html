@@ -4,123 +4,58 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}Parqueadero El PIJAO{% endblock %}</title>
+    <title>{% block title %}{{ parking_data.company_name }}{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
     />
   </head>
-  <body class="bg-gray-100">
-    <!-- Header -->
-    {% comment %}
+  <body class="bg-white">
     <header
-      class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white shadow-lg"
-    >
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center py-4">
-          <div class="flex items-center space-x-4">
-            <svg
-              class="h-8 w-8"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"
-              />
-            </svg>
-            <h1 class="text-xl font-bold">Parqueadero El PIJAO</h1>
-          </div>
-          <div class="flex items-center space-x-4">
-            <span class="text-sm">Bienvenido, {{ request.user.username }}</span>
-            <div class="relative group">
-              <button class="flex items-center space-x-1 focus:outline-none">
-                <span
-                  class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center"
-                >
-                  {{ request.user.username|first|upper }}
-                </span>
-              </button>
-              <div
-                class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 hidden group-hover:block"
-              >
-                <a
-                  href="#"
-                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >Mi perfil</a
-                >
-                <a
-                  href="{% url 'logout' %}"
-                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >Cerrar sesión</a
-                >
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
-    {% endcomment %}
-    <header
-      class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white shadow-lg"
+      class="bg-gray-900 text-white shadow-lg"
     >
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center py-4">
           <!-- Logo e ícono -->
           <div class="flex items-center space-x-4">
-            <svg
-              class="h-8 w-8 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"
-              />
+              <img src="{{ parking_data.company_logo.url }}" alt ="{{parking_data.company_name}}" class="h-16 w-16 text-white">
             </svg>
-            <h1 class="text-xl font-bold">Parqueadero El PIJAO</h1>
+            <h1 class="text-xl font-bold">{{ parking_data.company_name }}</h1>
           </div>
 
           <!-- Navegación principal -->
           <nav class="hidden md:flex items-center space-x-6">
             <a
               href="{% url 'dashboard' %}"
-              class="text-sm hover:underline"
+              class="text-base hover:underline font-semibold"
               class="scrolltop"
               >Inicio</a
             >
             <a
               href="{% url 'gestion_abonados' %}"
-              class="text-sm hover:underline"
+              class="text-base hover:underline font-semibold"
               >Membresías</a
             >
             <a
               href="{% url 'vehiculos_activos' %}"
-              class="text-sm hover:underline"
+              class="text-base hover:underline font-semibold"
               >Vehiculos</a
             >
-            <!--  <a href="{% url 'tarifas' %}" class="text-sm hover:underline">Tarifas</a>-->
           </nav>
 
           <!-- Usuario -->
           <div class="flex items-center space-x-4">
-            <span class="hidden sm:block text-sm"
+            <span class="hidden sm:block text-xl font-bold"
               >Bienvenido, {{ request.user.username }}</span
             >
             <div class="relative group">
               <button
-                class="flex items-center focus:outline-none"
+                class="flex items-center focus:outline-none"  
                 onclick="toggleMenu()"
               >
                 <span
-                  class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center font-bold uppercase"
+                  class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center font-bold uppercase text-black"
                 >
                   {{ request.user.username|first }}
                 </span>
@@ -143,7 +78,7 @@
             </div>
 
             <!-- Botón de menú móvil -->
-            <button class="md:hidden focus:outline-none">
+            <button class="md:hidden focus:outline-none"> 
               <svg
                 class="w-6 h-6 text-white"
                 fill="none"
@@ -183,7 +118,7 @@
       </div>
     </header>
     <!-- Contenido principal -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <main class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {% block content %} {% endblock %}
     </main>
 

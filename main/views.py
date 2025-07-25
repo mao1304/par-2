@@ -37,7 +37,7 @@ def logout_view(request):
 
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from .models import RegistroParqueo, Vehiculo, Tarifa, SuscripcionMensual, EstadisticaDiaria
+from .models import RegistroParqueo, Vehiculo, Tarifa, SuscripcionMensual, EstadisticaDiaria, ParkingData
 from django.utils import timezone
 from datetime import timedelta
 
@@ -47,6 +47,7 @@ def dashboard(request):
     total_carros = Vehiculo.objects.filter(tipo='carro').count()
     total_motos = Vehiculo.objects.filter(tipo='moto').count()
     total_vehiculos = total_carros + total_motos
+    parking_data = ParkingData.objects.first()
     
     # Vehículos activos actualmente
     vehiculos_activos = RegistroParqueo.objects.filter(esta_activo=True).count()
@@ -113,6 +114,7 @@ def dashboard(request):
         'abonados_motos': abonados_motos,
         'ingresos_mensuales': ingresos_mensuales,
         'es_admin': request.user.es_administrador(),
+        'parking_data': parking_data,
     }
     
     if request.user.es_administrador():
